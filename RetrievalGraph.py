@@ -3,12 +3,11 @@ from typing import List
 from typing_extensions import TypedDict
 import pprint
 import os
-
 from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain.schema import Document
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_upstage import UpstageGroundednessCheck
@@ -16,9 +15,10 @@ from langchain.chains.query_constructor.base import AttributeInfo
 from langgraph.graph import END, START, StateGraph
 from trulens.apps.langchain import WithFeedbackFilterDocuments
 from trulens.core import Feedback, TruSession
-from trulens.providers.openai import OpenAI
+from trulens.providers.openai import AzureOpenAI
 from trulens.apps.langchain import TruChain
 from langchain.load import dumps, loads
+UPSTAGE_API_KEY="up_VjWl59uApKL4H69akYmQJNRGEjR2H"
 
 
 class GradeDocuments(BaseModel):
@@ -51,18 +51,23 @@ class RetrievalGraph:
     def __init__(self):
         # Initialize Tavily
         self.web_search_tool = TavilySearchResults(k=3)
-        self.llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
+        self.llm = AzureChatOpenAI(azure_deployment="gpt-4o", 
+                                   api_version="2024-05-01-preview", 
+                                   azure_endpoint="https://agtech-llm-openai.openai.azure.com",
+                                   api_key="5366f9c0121f4852afeb69388c2aff3a")
 
         # Get access to Chroma vector store that has NC state agriculture information
 
-        openai_api_key = os.getenv("OPENAI_API_KEY")
-        openai_api_version = "2023-05-15"
+        #openai_api_key = os.getenv("OPENAI_API_KEY")
+        #openai_api_version = "2023-05-15"
         model = "text-embedding-ada-002"
+        endpoint = "https://agtech-llm-openai.openai.azure.com"
+        api_key = "5366f9c0121f4852afeb69388c2aff3a"
         vector_store_address = os.getenv("AZURE_SEARCH_ENDPOINT")
         vector_store_password = os.getenv("AZURE_SEARCH_ADMIN_KEY")
         print(vector_store_password)
-        embeddings: OpenAIEmbeddings = OpenAIEmbeddings(
-            openai_api_key=openai_api_key, openai_api_version=openai_api_version, model=model
+        embeddings: AzureOpenAIEmbeddings = AzureOpenAIEmbeddings(
+            api_key=api_key, model=model, azure_endpoint=endpoint
         )
         from langchain_community.vectorstores.azuresearch import AzureSearch
         index_name: str = "crop_guide"
@@ -135,14 +140,17 @@ class RetrievalGraph:
     def invoke(self, question, crop):
         os.environ["LANGCHAIN_TRACING_V2"] = "True"
         os.environ["LANGCHAIN_PROJECT"] = "RetrievalGraph"
-        return self.app.invoke({"question": question, "crop":"crop"})["generation"]
+        return self.app.invoke({"question": question, "crop": crop})["generation"]
 
 
     def retrieve(self, state):
 
         question = state["question"]
         print(question)
-        provider = OpenAI()
+        provider = AzureOpenAI(deployment_name="gpt-4o",
+                               api_version="2024-05-01-preview",
+                               azure_endpoint="https://agtech-llm-openai.openai.azure.com",
+                               api_key="5366f9c0121f4852afeb69388c2aff3a")
         f_context_relevance_score = Feedback(provider.context_relevance)
 
         retriever = self.vectorstore.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold":0.75})
@@ -174,11 +182,14 @@ class RetrievalGraph:
         prompt_sub_q = ChatPromptTemplate.from_template(template)
 
         from langchain_core.output_parsers import StrOutputParser
-        from langchain_openai import ChatOpenAI
+        from langchain_openai import AzureChatOpenAI
 
         generate_queries = (
                 prompt_sub_q
-                | ChatOpenAI(temperature=0)
+                | AzureChatOpenAI(azure_deployment="gpt-4o", 
+                                     api_version="2024-05-01-preview", 
+                                     azure_endpoint="https://agtech-llm-openai.openai.azure.com", 
+                                     temperature=0)
                 | StrOutputParser()
                 | (lambda x: x.split("\n"))
         )
@@ -204,10 +215,13 @@ class RetrievalGraph:
     def generate(self, state):
         question = state["question"]
         documents = state["documents"]
-        provider = OpenAI()
+        provider = AzureChatOpenAI(azure_deployment="gpt-4o",
+                                   api_version="2024-05-01-preview",
+                                   azure_endpoint="https://agtech-llm-openai.openai.azure.com",
+                                   api_key="5366f9c0121f4852afeb69388c2aff3a")
         generation = self.rag_chain.invoke({"context": documents, "question": question})
 
-        groundedness_check = UpstageGroundednessCheck()
+        groundedness_check = UpstageGroundednessCheck(upstage_api_key='up_VjWl59uApKL4H69akYmQJNRGEjR2H')
 
         request_input = {
             "context": documents,
@@ -249,7 +263,6 @@ class RetrievalGraph:
 
 
     def web_search(self, state):
-
         question = state["question"]
         documents = state["documents"]
 
@@ -262,11 +275,14 @@ class RetrievalGraph:
         prompt_sub_q = ChatPromptTemplate.from_template(template)
 
         from langchain_core.output_parsers import StrOutputParser
-        from langchain_openai import ChatOpenAI
+        from langchain_openai import AzureChatOpenAI
 
         generate_queries = (
                 prompt_sub_q
-                | ChatOpenAI(temperature=0)
+                | AzureChatOpenAI(azure_deployment="gpt-4o", 
+                                     api_version="2024-05-01-preview", 
+                                     azure_endpoint="https://agtech-llm-openai.openai.azure.com", 
+                                     temperature=0)
                 | StrOutputParser()
                 | (lambda x: x.split("\n"))
         )

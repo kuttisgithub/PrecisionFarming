@@ -1,18 +1,24 @@
 import os
 
 from langchain_community.vectorstores.azuresearch import AzureSearch
-from langchain_openai import AzureOpenAIEmbeddings, OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 
-openai_api_key = os.getenv("OPENAI_API_KEY")
+#openai_api_key = os.getenv("OPENAI_API_KEY")
+azure_deployment="gpt-4o"
+api_version="2024-05-01-preview"
+azure_endpoint="https://agtech-llm-openai.openai.azure.com"
+api_key="5366f9c0121f4852afeb69388c2aff3a"
+
 openai_api_version = "2023-05-15"
 model = "text-embedding-ada-002"
 vector_store_address = os.getenv("AZURE_SEARCH_ENDPOINT")
 vector_store_password = os.getenv("AZURE_SEARCH_ADMIN_KEY")
 print(vector_store_password)
-embeddings: OpenAIEmbeddings = OpenAIEmbeddings(
-    openai_api_key=openai_api_key, openai_api_version=openai_api_version, model=model
-)
+embeddings: AzureOpenAIEmbeddings = AzureOpenAIEmbeddings(
+    azure_endpoint=azure_endpoint, 
+    api_key=api_key, 
+    model=model)
 
 index_name: str = "crop_guide"
 vector_store: AzureSearch = AzureSearch(

@@ -4,7 +4,7 @@ import pprint
 import uuid
 from typing import TypedDict, Annotated
 
-from langchain_openai import ChatOpenAI
+from langchain_openai import AzureChatOpenAI
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
 from langchain_core.output_parsers import JsonOutputParser, MarkdownListOutputParser
 from langgraph.graph import StateGraph, END
@@ -60,7 +60,10 @@ class Agent:
 
 class PrecisionFarming:
     def __init__(self):
-        self.model = ChatOpenAI(model='gpt-4o', openai_api_key=os.getenv("OPENAI_API_KEY"), )
+        self.model = AzureChatOpenAI(
+            azure_deployment="gpt-4o",
+            api_version="2024-05-01-preview",
+            azure_endpoint="https://agtech-llm-openai.openai.azure.com")
         self.tool_list = [tools.decrease_ph, tools.get_weather_data,
                      tools.get_crop_info, tools.calculate_water_needed, tools.tackle_insect, tools.tackle_disease,
                           tools.increase_ph]
