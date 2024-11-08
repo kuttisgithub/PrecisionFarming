@@ -5,19 +5,20 @@ from langchain_openai import AzureOpenAIEmbeddings
 
 
 #openai_api_key = os.getenv("OPENAI_API_KEY")
-azure_deployment="gpt-4o"
-api_version="2024-05-01-preview"
-azure_endpoint="https://agtech-llm-openai.openai.azure.com"
-api_key="5366f9c0121f4852afeb69388c2aff3a"
+AZURE_DEPLOYMENT="gpt-4o"
+API_VERSION="2024-05-01-preview"
+AZURE_ENDPOINT="https://agtech-llm-openai.openai.azure.com"
+API_KEY="5366f9c0121f4852afeb69388c2aff3a"
 
 openai_api_version = "2023-05-15"
 model = "text-embedding-ada-002"
 vector_store_address = os.getenv("AZURE_SEARCH_ENDPOINT")
 vector_store_password = os.getenv("AZURE_SEARCH_ADMIN_KEY")
-print(vector_store_password)
+
+
 embeddings: AzureOpenAIEmbeddings = AzureOpenAIEmbeddings(
-    azure_endpoint=azure_endpoint, 
-    api_key=api_key, 
+    azure_endpoint=AZURE_ENDPOINT, 
+    api_key=API_KEY, 
     model=model)
 
 index_name: str = "crop_guide"
