@@ -23,7 +23,7 @@ UPSTAGE_API_KEY = "up_VjWl59uApKL4H69akYmQJNRGEjR2H"
 AZURE_DEPLOYMENT = "gpt-4o"
 API_VERSION = "2024-05-01-preview"
 AZURE_ENDPOINT = "https://agtech-llm-openai.openai.azure.com"
-API_KEY = "YOUR_API_KEY"
+API_KEY = "5366f9c0121f4852afeb69388c2aff3a"
 
 class GradeDocuments(BaseModel):
     """Binary score for relevance check on retrieved documents."""
