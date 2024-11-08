@@ -9,3 +9,6 @@ CottonLeafDiseaseImages
 SoybeanLeafDiseaseImages
 test_images
 .env
+__pycache__/AgentTools.cpython-312.pyc
+__pycache__/PrecisionFarming.cpython-312.pyc
+__pycache__/RetrievalGraph.cpython-312.pyc
