@@ -137,6 +137,9 @@ class RetrievalGraph:
         # Compile
         self.app = workflow.compile()
         pprint.pprint(self.app.get_graph().draw_ascii())
+        
+        # Initialize the retrieved_docs_cache
+        self.retrieved_docs_cache = {}
 
     def invoke(self, question, crop):
         os.environ["LANGCHAIN_TRACING_V2"] = "True"
@@ -146,10 +149,19 @@ class RetrievalGraph:
 
     def retrieve(self, state):
         question = state["question"]
-        print(question)
+        crop = state["crop"]
         
+        # Check the cache first
+        cache_key = (question, crop)
+        print("Cacche key is", cache_key)
+        if cache_key in self.retrieved_docs_cache:
+            print("Getting documents from Cache")
+            return {"documents": self.retrieved_docs_cache[cache_key]}
+        
+        # If not in cache, retrieve documents
+        print(question)
         # Combine crop context with question directly instead of generating subquestions
-        enhanced_question = f"Regarding {state['crop']}: {question}"
+        enhanced_question = f"Regarding {crop}: {question}"
         
         # First attempt with higher threshold
         retriever = self.vectorstore.as_retriever(
@@ -170,7 +182,12 @@ class RetrievalGraph:
             docs.extend(additional_docs)
         
         # Limit total documents if we got too many
-        return {"documents": docs[:5]}
+        docs = docs[:5]
+        
+        # Cache the documents
+        self.retrieved_docs_cache[cache_key] = docs
+        
+        return {"documents": docs}
 
 
     def generate(self, state):
