@@ -14,6 +14,12 @@ def update_lat_long(location):
     st.session_state.lat, st.session_state.long = geocoder.arcgis(
         location).latlng
 
+def show_completion_animation():
+    """Show an animated completion indicator"""
+    with st.spinner('🎯 Analysis Complete! Preparing results...'):
+        time.sleep(2)  # Give a moment to see the animation
+    st.balloons()  # Add some celebration effects
+
 def create_streamlit_app():
     st.set_page_config(page_title="Precision Farming Assistant",
                        page_icon="🌾",
@@ -21,7 +27,6 @@ def create_streamlit_app():
 
     st.title("🌾 Precision Farming Assistant")
 
-    # Initialize session state
     if "pf" not in st.session_state:
         st.session_state.pf = PrecisionFarming()
     if "loc" not in st.session_state:
@@ -29,13 +34,12 @@ def create_streamlit_app():
         st.session_state.lat, st.session_state.long = geocoder.arcgis(
             st.session_state.loc).latlng
 
-    # Create two main columns - inputs on left, status/results on right
+    # Create two main columns
     input_col, status_col = st.columns([1, 2])
 
-    # Left column for all inputs
+    # Left column for inputs
     with input_col:
         st.header("Input Parameters")
-        # Location input
         loc = st.text_input(
             "Location",
             key="loc",
@@ -61,66 +65,71 @@ def create_streamlit_app():
     # Right column for status and results
     with status_col:
         st.header("Analysis Status & Results")
-        status_area = st.container()
-        progress_area = st.container()
-        result_area = st.empty()
-
+        
+        # Create placeholder for dynamic content
+        display_area = st.empty()
+        
         if analyze_button:
-            tool_progress = {}
+            # Create a container within the placeholder for progress
+            with display_area.container():
+                status_area = st.container()
+                progress_area = st.container()
+                tool_progress = {}
 
-            def update_status(message, progress, tool_name):
-                with status_area:
-                    if progress == -1:  # Error state
-                        st.error(message)
-                        return
+                def update_status(message, progress, tool_name):
+                    with status_area:
+                        if progress == -1:
+                            st.error(message)
+                            return
 
-                    # Create or update tool-specific progress
-                    if tool_name not in tool_progress:
-                        with progress_area:
-                            tool_progress[tool_name] = {
-                                'status': st.empty(),
-                                'bar': st.progress(0)
-                            }
+                        if tool_name not in tool_progress:
+                            with progress_area:
+                                tool_progress[tool_name] = {
+                                    'status': st.empty(),
+                                    'bar': st.progress(0)
+                                }
 
-                    prog = tool_progress[tool_name]
-                    prog['status'].info(f"{tool_name}: {message}")
-                    prog['bar'].progress(int(progress))
+                        prog = tool_progress[tool_name]
+                        prog['status'].info(f"{tool_name}: {message}")
+                        prog['bar'].progress(int(progress))
 
-                    # Mark completion
-                    if progress == 100:
-                        prog['status'].success(
-                            f"{tool_name}: Completed at {time.strftime('%H:%M:%S')}"
-                        )
+                try:
+                    # Process images if provided
+                    insect_img = None
+                    leaf_img = None
 
-            try:
-                # Process images if provided
-                insect_img = None
-                leaf_img = None
+                    if insect:
+                        insect_img = image.load_img(insect, target_size=(224, 224))
+                    if leaf:
+                        leaf_img = image.load_img(leaf, target_size=(224, 224))
 
-                if insect:
-                    insect_img = image.load_img(insect, target_size=(224, 224))
-                if leaf:
-                    leaf_img = image.load_img(leaf, target_size=(224, 224))
+                    # Get insights with progress tracking
+                    insights = st.session_state.pf.get_insights(
+                        soil_ph=soil_ph,
+                        soil_moisture=soil_moisture,
+                        latitude=latitude,
+                        longitude=longitude,
+                        area_acres=area,
+                        crop=crop,
+                        insect=insect_img,
+                        leaf=leaf_img,
+                        status_callback=update_status)
 
-                # Get insights with progress tracking
-                insights = st.session_state.pf.get_insights(
-                    soil_ph=soil_ph,
-                    soil_moisture=soil_moisture,
-                    latitude=latitude,
-                    longitude=longitude,
-                    area_acres=area,
-                    crop=crop,
-                    insect=insect_img,
-                    leaf=leaf_img,
-                    status_callback=update_status)
+                    # Show completion animation
+                    show_completion_animation()
 
-                # Display results
-                with result_area:
-                    st.markdown("### Farm Analysis Results")
-                    st.markdown(insights)
+                    # Clear the progress display and show results
+                    display_area.empty()
+                    with display_area.container():
+                        st.success("✨ Analysis Complete!")
+                        st.markdown("### Farm Analysis Results")
+                        # Add a visual separator
+                        st.markdown("---")
+                        # Display the results in a clean format
+                        st.markdown(insights)
 
-            except Exception as e:
-                st.error(f"An error occurred: {str(e)}")
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
     create_streamlit_app()
