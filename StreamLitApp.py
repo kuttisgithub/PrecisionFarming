@@ -3,6 +3,11 @@ import time
 import geocoder
 from keras.preprocessing import image
 from PrecisionFarming import PrecisionFarming
+from streamlit_folium import st_folium
+from streamlit_modal import Modal
+import requests
+import folium
+
 
 def show_completion_animation():
     """Show a farming-themed emoji animation."""
@@ -33,6 +38,16 @@ def create_streamlit_app():
 
     st.title("🌾 Precision Farming Assistant")
 
+    modal = Modal("Select a Location on Map", key="map_modal")
+
+
+    # State variables for selected location and location name
+    if "selected_location" not in st.session_state:
+        st.session_state["selected_location"] = ""
+    if "location_name" not in st.session_state:
+        st.session_state["location_name"] = ""
+
+
     if "pf" not in st.session_state:
         st.session_state.pf = PrecisionFarming()
     if "loc" not in st.session_state:
@@ -47,8 +62,47 @@ def create_streamlit_app():
         
         loc = st.text_input("Location", 
                            key="loc",
+                           value=st.session_state["selected_location"],
                            on_change=lambda: update_lat_long(st.session_state.loc))
         
+     
+        # Button to open the modal
+        if st.button("Open Map Popup"):
+            modal.open()
+
+            # Show the modal and load the map inside it when the button is clicked
+        if modal.is_open():
+            with modal.container():
+                lattitude, longitude = geocoder.arcgis(
+                st.session_state.loc).latlng
+                # Set default location and zoom level for the map
+                map_center = [lattitude, longitude]  # Centered on India (for example)
+                zoom_start = 7
+
+                # Create the map with folium
+                m = folium.Map(location=map_center, zoom_start=zoom_start)
+
+                # Add an event to capture clicks on the map and return latitude and longitude
+                m.add_child(folium.LatLngPopup())
+
+                # Display the map in Streamlit using st_folium
+                map_data = st_folium(m, width=900, height=600)
+
+                # Display the selected latitude and longitude
+                if map_data["last_clicked"]:
+                    lat = map_data["last_clicked"]["lat"]
+                    lon = map_data["last_clicked"]["lng"]
+                    arc = geocoder.arcgis([lat, lon], method="reverse")
+                    locationName = f"{arc.city}, {arc.state}"
+                    st.session_state["selected_location"] = locationName
+                    # lat1, long1 = geocoder.arcgis(
+                    # st.session_state.selected_location).latlng
+                    st.session_state["lat"] = lat
+                    st.session_state["long"] = lon
+                    print(f"Selected Location: {locationName} &&  Latitude = {lat}, Longitude = {lon}")
+                    modal.close()
+
+
         lat_col, long_col = st.columns(2)
         with lat_col:
             latitude = st.number_input("Latitude",
