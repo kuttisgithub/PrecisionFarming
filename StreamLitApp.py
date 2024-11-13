@@ -35,7 +35,7 @@ def create_streamlit_app():
     st.set_page_config(page_title="Precision Farming Agent",
                        page_icon="🌾",
                        layout="wide")
-
+    
     st.title("🌾 Precision Farming Agent")
 
     modal = Modal("Select a Location on Map", key="map_modal")
@@ -55,17 +55,16 @@ def create_streamlit_app():
         st.session_state.lat, st.session_state.long = geocoder.arcgis(
             st.session_state.loc).latlng
 
+    st.header("Field Parameters")
     input_col, status_col = st.columns(2)
 
     with input_col:
-        st.header("Input Parameters")
         
         loc = st.text_input("Location", 
                            key="loc",
                            value=st.session_state["selected_location"],
                            on_change=lambda: update_lat_long(st.session_state.loc))
         
-     
         # Button to open the modal
         if st.button("Open Map Popup"):
             modal.open()
@@ -118,9 +117,15 @@ def create_streamlit_app():
                                           st.session_state.long))
 
         area = st.number_input("Area (acres)", min_value=1, value=10)
-        crop = st.selectbox("Crop", ["Corn", "Cotton", "Soybean"])
+       
+        leaf_img = st.file_uploader("Upload Leaf Disease Image (optional)",
+                                   type=['jpg', 'jpeg', 'png'])
+        if leaf_img:
+            st.image(leaf_img, caption="Uploaded Leaf Image")
+            leaf_img = image.load_img(leaf_img, target_size=(224, 224))
 
     with status_col:
+        crop = st.selectbox("Crop", ["Corn", "Cotton", "Soybean"])
         soil_ph = st.slider("Soil pH", 0.0, 14.0, 6.5, 0.1)
         soil_moisture = st.slider("Soil Moisture %", 0, 100, 30, 1)
         
@@ -130,15 +135,11 @@ def create_streamlit_app():
             st.image(insect_img, caption="Uploaded Insect Image")
             insect_img = image.load_img(insect_img, target_size=(224, 224))
 
-        leaf_img = st.file_uploader("Upload Leaf Disease Image (optional)",
-                                   type=['jpg', 'jpeg', 'png'])
-        if leaf_img:
-            st.image(leaf_img, caption="Uploaded Leaf Image")
-            leaf_img = image.load_img(leaf_img, target_size=(224, 224))
+
 
  
     analyze_button = st.button("Analyze Farm Conditions")
-    st.header("Analysis Status & Results")
+
     display_area = st.empty()
     if analyze_button:
         try:
@@ -171,14 +172,13 @@ def create_streamlit_app():
                 # Clear and show results
                 display_area.empty()
                 with display_area.container():
+                    st.header("Analysis Status & Results")
                     st.markdown("### 🌟 Farm Analysis Results")
                     st.markdown("---")
                     st.markdown(insights)
 
         except Exception as e:
             display_area.error(f"An error occurred: {str(e)}")
-
-
 
 if __name__ == "__main__":
     create_streamlit_app()
