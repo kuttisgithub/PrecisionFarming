@@ -77,7 +77,7 @@ def create_streamlit_app():
                 st.session_state.loc).latlng
                 # Set default location and zoom level for the map
                 map_center = [lattitude, longitude]  # Centered on India (for example)
-                zoom_start = 7
+                zoom_start = 12
 
                 # Create the map with folium
                 m = folium.Map(location=map_center, zoom_start=zoom_start)
