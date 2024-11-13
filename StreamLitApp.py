@@ -32,11 +32,11 @@ def update_lat_long(location):
         location).latlng
 
 def create_streamlit_app():
-    st.set_page_config(page_title="Precision Farming Assistant",
+    st.set_page_config(page_title="Precision Farming Agent",
                        page_icon="🌾",
                        layout="wide")
 
-    st.title("🌾 Precision Farming Assistant")
+    st.title("🌾 Precision Farming Agent")
 
     modal = Modal("Select a Location on Map", key="map_modal")
 
@@ -55,7 +55,7 @@ def create_streamlit_app():
         st.session_state.lat, st.session_state.long = geocoder.arcgis(
             st.session_state.loc).latlng
 
-    input_col, status_col = st.columns([1, 2])
+    input_col, status_col = st.columns(2)
 
     with input_col:
         st.header("Input Parameters")
@@ -118,9 +118,11 @@ def create_streamlit_app():
                                           st.session_state.long))
 
         area = st.number_input("Area (acres)", min_value=1, value=10)
+        crop = st.selectbox("Crop", ["Corn", "Cotton", "Soybean"])
+
+    with status_col:
         soil_ph = st.slider("Soil pH", 0.0, 14.0, 6.5, 0.1)
         soil_moisture = st.slider("Soil Moisture %", 0, 100, 30, 1)
-        crop = st.selectbox("Crop", ["Corn", "Cotton", "Soybean"])
         
         insect_img = st.file_uploader("Upload Insect Image (optional)",
                                      type=['jpg', 'jpeg', 'png'])
@@ -134,49 +136,49 @@ def create_streamlit_app():
             st.image(leaf_img, caption="Uploaded Leaf Image")
             leaf_img = image.load_img(leaf_img, target_size=(224, 224))
 
-        analyze_button = st.button("Analyze Farm Conditions")
+ 
+    analyze_button = st.button("Analyze Farm Conditions")
+    st.header("Analysis Status & Results")
+    display_area = st.empty()
+    if analyze_button:
+        try:
+            with display_area.container():
+                status_area = st.empty()
+                progress_area = st.empty()
 
-    with status_col:
-        st.header("Analysis Status & Results")
-        display_area = st.empty()
+                def update_status(message, progress, step):
+                    if progress >= 0:
+                        progress_value = min(max(progress, 0), 100) / 100.0
+                        progress_area.progress(progress_value)
+                        status_area.info(f"🔄 Step: {step}\n{message}")
 
-        if analyze_button:
-            try:
+                insights = st.session_state.pf.get_insights(
+                    soil_ph=soil_ph,
+                    soil_moisture=soil_moisture,
+                    latitude=latitude,
+                    longitude=longitude,
+                    area_acres=area,
+                    crop=crop,
+                    insect=insect_img,
+                    leaf=leaf_img,
+                    status_callback=update_status)
+
+                # Show completion animation
+                status_area.empty()
+                progress_area.empty()
+                show_completion_animation()
+
+                # Clear and show results
+                display_area.empty()
                 with display_area.container():
-                    status_area = st.empty()
-                    progress_area = st.empty()
+                    st.markdown("### 🌟 Farm Analysis Results")
+                    st.markdown("---")
+                    st.markdown(insights)
 
-                    def update_status(message, progress, step):
-                        if progress >= 0:
-                            progress_value = min(max(progress, 0), 100) / 100.0
-                            progress_area.progress(progress_value)
-                            status_area.info(f"🔄 Step: {step}\n{message}")
+        except Exception as e:
+            display_area.error(f"An error occurred: {str(e)}")
 
-                    insights = st.session_state.pf.get_insights(
-                        soil_ph=soil_ph,
-                        soil_moisture=soil_moisture,
-                        latitude=latitude,
-                        longitude=longitude,
-                        area_acres=area,
-                        crop=crop,
-                        insect=insect_img,
-                        leaf=leaf_img,
-                        status_callback=update_status)
 
-                    # Show completion animation
-                    status_area.empty()
-                    progress_area.empty()
-                    show_completion_animation()
-
-                    # Clear and show results
-                    display_area.empty()
-                    with display_area.container():
-                        st.markdown("### 🌟 Farm Analysis Results")
-                        st.markdown("---")
-                        st.markdown(insights)
-
-            except Exception as e:
-                display_area.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
     create_streamlit_app()
