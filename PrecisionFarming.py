@@ -127,6 +127,21 @@ class PrecisionFarming:
                 explain your reasoning for the timing. Provide reference to the weather and moisture levels and you used it in your reasoning
         """
 
+    def get_Insect(self, insect):
+        if insect is not None:
+            return tools.predict_insect(insect)
+        return None
+    
+    def get_Leaf(self, leaf, crop):
+        if leaf is not None:
+            if crop == "Corn":
+                return tools.predict_corn_leaf_disease(leaf)
+            elif crop == "Cotton":
+                return tools.predict_cotton_leaf_disease(leaf)
+            elif crop == "Soybean":
+                return tools.predict_soybean_leaf_disease(leaf)
+        return
+
     def get_insights(self, soil_ph=6.5, soil_moisture=30, latitude=35.41, longitude=-80.58,
                     area_acres=10, crop="Corn", insect=None, leaf=None, status_callback=None):
         try:
