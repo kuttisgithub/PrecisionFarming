@@ -27,4 +27,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Command to run the Streamlit application
 #CMD ["streamlit", "run", "StreamLitApp.py"]
 EXPOSE 80
-CMD ["python", "app.py"]
+#CMD ["python", "app.py"]
+CMD ["uvicorn", "main:app", "--reload"]
