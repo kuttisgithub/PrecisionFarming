@@ -28,4 +28,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 #CMD ["streamlit", "run", "StreamLitApp.py"]
 EXPOSE 80
 #CMD ["python", "app.py"]
-CMD ["uvicorn", "main:app", "--reload"]
+#CMD ["uvicorn", "main:app", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
