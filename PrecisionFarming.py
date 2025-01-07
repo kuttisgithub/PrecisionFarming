@@ -127,12 +127,31 @@ class PrecisionFarming:
                 explain your reasoning for the timing. Provide reference to the weather and moisture levels and you used it in your reasoning
         """
 
+        self.leafDieseasPrompt = """
+            You are an Expert framing assistant. You will be given the following information
+            Leaf Disease Name: {leaf}
+        
+            Based on this information, get additional data and analyze
+        
+            Based on tool call results, provide a precision farming assessment in below format. Please do not use any other 
+            information other than what was provided by the tools. Do not halunicate. Base your response on the data provided.
+           
+            Leaf Disease Control Plan:
+                Get insights on how to remediate the disease effecting the crop. Take into account the crop, the disease, weather, watering plan
+                Tell the farmer what the disease is in the leaf image
+                Create a date by date action plan to remediate the disease? Focus should be on remediation and not prevention. Remeber, framer already has the problem
+                Explain your rationale for the action plan. What data did you consider to come up with the plan?
+                explain your reasoning for the timing. Provide reference to the weather and moisture levels and you used it in your reasoning
+        """
+
+
     def get_Insect(self, insect):
         if insect is not None:
             return tools.predict_insect(insect)
         return None
-    
-    def get_Leaf(self, leaf, crop):
+
+
+    def Identify_Leaf_Disease(self, leaf, crop):
         if leaf is not None:
             if crop == "Corn":
                 return tools.predict_corn_leaf_disease(leaf)
@@ -140,6 +159,41 @@ class PrecisionFarming:
                 return tools.predict_cotton_leaf_disease(leaf)
             elif crop == "Soybean":
                 return tools.predict_soybean_leaf_disease(leaf)
+            
+
+
+    def Identify_LeafDiseaseAndRecommendRemedies(self, leaf, crop):
+        if leaf is not None:
+            leafDieseasName = ""
+            if crop == "Corn":
+                leafDieseasName = tools.predict_corn_leaf_disease(leaf)
+            elif crop == "Cotton":
+                leafDieseasName = tools.predict_cotton_leaf_disease(leaf)
+            elif crop == "Soybean":
+                leafDieseasName = tools.predict_soybean_leaf_disease(leaf)
+            
+            print("Leaf Disease Name: ", leafDieseasName)
+            leafDieseasPrompt = self.leafDieseasPrompt.format(leaf = leafDieseasName)
+
+            print("Leaf Disease Prompt: ", leafDieseasPrompt)
+             # Create agent with status tracking
+            abot = Agent(self.model, [tools.tackle_leaf_disease], system = leafDieseasPrompt)
+            thread = {"configurable": {"thread_id": uuid.uuid4()}}
+            #question = "Give me your precision farming assessment"
+            question = "Give me Leaf Disease Control Plan"
+
+            # Get farming assessment
+            response = abot.graph.invoke({
+                "messages": [HumanMessage(content=[{
+                    "type": "text", 
+                    "text": question}])],
+                "thread": thread
+            })
+
+            # Return the last message
+            return leafDieseasName, response['messages'][-1].content
+
+
         return
 
     def get_insights(self, soil_ph=6.5, soil_moisture=30, latitude=35.41, longitude=-80.58,

@@ -23,13 +23,14 @@ async def Get_Leaf_Disease(file: UploadFile = File(...), crop_name: str = Form(.
             image = Image.open(io.BytesIO(content))
             resized_image = image.resize((224, 224), Image.Resampling.NEAREST)
             pf = PrecisionFarming()
-            leafdisease = pf.get_Leaf(resized_image, crop_name)
+            leafdisease = pf.Identify_LeafDiseaseAndRecommendRemedies(resized_image, crop_name)
             image_format = image.format
         except Exception as e:
             raise HTTPException(status_code=400, detail="Invalid image file.")
 
         return {
-            "leaf_disease": leafdisease,
+            "Disease": leafdisease[0],
+            "Details": leafdisease[1],
             "crop_name": crop_name,
             "filename": file.filename,
             "content_type": file.content_type,

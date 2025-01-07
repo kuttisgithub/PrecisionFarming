@@ -190,6 +190,11 @@ def fertilizer_to_add(crop_question, crop):
     return retrieval_graph.invoke(crop_question, crop)
 
 
+class LeafDisease(BaseModel):
+    crop: str = Field(..., description="Crop to protect")
+    disease_name: str = Field(..., description="Name of the disease")
+
+
 class CropDisease(BaseModel):
     crop: str = Field(..., description="Crop to protect")
     disease_name: str = Field(..., description="Name of the disease")
@@ -227,6 +232,33 @@ def tackle_disease(crop, disease_name, moisture, weather, irrigation_plan):
 
     print("Tackling disease", question, crop)
     return retrieval_graph.invoke(question, crop)
+
+@tool(args_schema=LeafDisease)
+def tackle_leaf_disease(crop, disease_name):
+    """Get insights on how to address disease for a given crop"""
+    prompt_template = PromptTemplate.from_template(
+        """
+        You are an agricultural disease management expert is a professional with specialized knowledge in entomology, 
+        plant pathology, and crop protection.
+        
+        A farmer has come to you with a disease effeecting his/her crop. 
+        The farmer is growing {crop}. 
+        The farmer has noticed {disease} disease on the crop.
+        
+        You need to provide the farmer with the following information:
+        1. Insights on the disease, how it effects the plant and its yield
+        2. What causes the disease and how to prevent it
+        3. Now that the disease is present, how to remediate it? Include specific informaiton
+            - On what pesticides to use,
+            - Give dates when the pesticides should be applied
+            - Where to get the pesticides from
+        """
+    )
+    question = prompt_template.format(crop=crop, disease=disease_name)
+
+    print("Tackling disease", question, crop)
+    return retrieval_graph.invoke(question, crop)
+
 
 
 class CropInsect(BaseModel):
