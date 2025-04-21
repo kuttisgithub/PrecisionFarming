@@ -19,7 +19,7 @@ from trulens.providers.openai import AzureOpenAI
 from trulens.apps.langchain import TruChain
 from langchain.load import dumps, loads
 
-UPSTAGE_API_KEY="up_VjWl59uApKL4H69akYmQJNRGEjR2H"
+UPSTAGE_API_KEY="up_QGbt9HNFmsiimf6Bd8nrhUqn7Aegk"
 AZURE_DEPLOYMENT="gpt-4o"
 API_VERSION="2024-05-01-preview"
 AZURE_ENDPOINT="https://agtech-llm-openai.openai.azure.com"
@@ -199,7 +199,7 @@ class RetrievalGraph:
                                    api_key=API_KEY)
         generation = self.rag_chain.invoke({"context": documents, "question": question})
 
-        groundedness_check = UpstageGroundednessCheck(upstage_api_key='up_VjWl59uApKL4H69akYmQJNRGEjR2H')
+        groundedness_check = UpstageGroundednessCheck(upstage_api_key='up_QGbt9HNFmsiimf6Bd8nrhUqn7Aegk')
 
         request_input = {
             "context": documents,
