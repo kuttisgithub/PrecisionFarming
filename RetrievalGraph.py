@@ -18,12 +18,21 @@ from trulens.core import Feedback, TruSession
 from trulens.providers.openai import AzureOpenAI
 from trulens.apps.langchain import TruChain
 from langchain.load import dumps, loads
+from dotenv import load_dotenv
 
-UPSTAGE_API_KEY="up_QGbt9HNFmsiimf6Bd8nrhUqn7Aegk"
+load_dotenv()
+
+
+
 AZURE_DEPLOYMENT="gpt-4o"
 API_VERSION="2024-05-01-preview"
-AZURE_ENDPOINT="https://agtech-llm-openai.openai.azure.com"
-API_KEY="5366f9c0121f4852afeb69388c2aff3a"
+
+
+AZURE_ENDPOINT = os.getenv("AZURE_OPENAI_API_ENDPOINT")
+API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+UPSTAGE_API_KEY= os.getenv("UPSTAGE_API_KEY")
+
+print(f"Key from env: {UPSTAGE_API_KEY}...")  # 
 
 class GradeDocuments(BaseModel):
     """Binary score for relevance check on retrieved documents."""
@@ -199,7 +208,8 @@ class RetrievalGraph:
                                    api_key=API_KEY)
         generation = self.rag_chain.invoke({"context": documents, "question": question})
 
-        groundedness_check = UpstageGroundednessCheck(upstage_api_key='up_QGbt9HNFmsiimf6Bd8nrhUqn7Aegk')
+        print(f"Key from env2: {UPSTAGE_API_KEY}...")  # 
+        groundedness_check = UpstageGroundednessCheck(upstage_api_key=UPSTAGE_API_KEY)
 
         request_input = {
             "context": documents,
